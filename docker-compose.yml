@@ -19,10 +19,6 @@ services:
   postgresql:
     image: postgres:15
     container_name: postgresql
-    environment:
-      - POSTGRES_DB=unifydata
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=12345
     volumes:
       - dbdata:/var/lib/postgresql/data
     ports:
