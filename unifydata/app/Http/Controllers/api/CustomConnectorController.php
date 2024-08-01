@@ -38,51 +38,57 @@ class CustomConnectorController extends Controller
             'url' => 'required|string',
         ]);
 
-        $streams = $connector->streams ?? [];
+        $streams = json_decode($connector->streams, true) ?? [];
         $streams[] = $validated;
 
-        $connector->update(['streams' => $streams]);
+        $connector->update(['streams' => json_encode($streams)]);
 
         return response()->json(['message' => 'Stream added successfully', 'data' => $connector]);
     }
 
     public function testStreamByUrl($url)
-    {
-        // Decode the URL if it is URL-encoded
-        $decodedUrl = urldecode($url);
+{
+    $decodedUrl = urldecode($url);
 
-        // Extract the path part from the URL
-        $urlPath = parse_url($decodedUrl, PHP_URL_PATH);
+    // Extract the path part from the URL
+    $urlPath = parse_url($decodedUrl, PHP_URL_PATH);
 
-        // Find the connector that matches the base URL
-        $connector = CustomConnector::where('base_url', 'like', '%' . $urlPath . '%')->first();
+    // Find the connector that matches the stream URL or base URL
+    $connectors = CustomConnector::all();
+    $matchedConnector = null;
+    $matchedStream = null;
 
-        if (!$connector) {
-            return response()->json(['message' => 'Connector not found for the provided URL'], 404);
-        }
-
-        // Decode the streams JSON string to an array
+    foreach ($connectors as $connector) {
         $streams = json_decode($connector->streams, true);
 
-        // Find the stream that matches the URL path
-        $stream = collect($streams)->firstWhere('url', $urlPath);
-
-        if (!$stream) {
-            return response()->json(['message' => 'Stream not found for the provided URL'], 404);
+        // Check if any stream URL matches the decoded URL or URL path
+        foreach ($streams as $stream) {
+            $streamUrl = filter_var($stream['url'], FILTER_VALIDATE_URL) ? $stream['url'] : rtrim($connector->base_url, '/') . '/' . ltrim($stream['url'], '/');
+            if ($streamUrl == $decodedUrl || $stream['url'] == '/' . $urlPath) {
+                $matchedConnector = $connector;
+                $matchedStream = $stream;
+                break 2; // Break both loops
+            }
         }
-
-        // Determine if the stream URL is a full URL or a relative path
-        $streamUrl = filter_var($stream['url'], FILTER_VALIDATE_URL) ? $stream['url'] : rtrim($connector->base_url, '/') . '/' . ltrim($stream['url'], '/');
-
-        // Make the authenticated request
-        $response = $this->makeAuthenticatedRequest($connector, $streamUrl);
-
-        if ($response->successful()) {
-            return response()->json(['message' => 'Stream tested successfully', 'data' => $response->json()]);
-        }
-
-        return response()->json(['message' => 'Failed to test stream', 'error' => $response->body()], 400);
     }
+
+    if (!$matchedConnector || !$matchedStream) {
+        return response()->json(['message' => 'Connector not found for the provided URL'], 404);
+    }
+
+    // Determine if the stream URL is a full URL or a relative path
+    $streamUrl = filter_var($matchedStream['url'], FILTER_VALIDATE_URL) ? $matchedStream['url'] : rtrim($matchedConnector->base_url, '/') . '/' . ltrim($matchedStream['url'], '/');
+
+    // Make the authenticated request
+    $response = $this->makeAuthenticatedRequest($matchedConnector, $streamUrl);
+
+    if ($response->successful()) {
+        $matchedConnector->update(['published' => true]);
+        return response()->json(['message' => 'Stream tested successfully and connector published', 'data' => $response->json()]);
+    }
+
+    return response()->json(['message' => 'Failed to test stream', 'error' => $response->body()], 400);
+}
 
     private function makeAuthenticatedRequest($connector, $url)
     {
