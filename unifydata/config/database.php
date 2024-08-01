@@ -30,6 +30,17 @@ return [
     */
 
     'connections' => [
+        'mongodb' => [
+            'driver' => 'mongodb',
+            'host' => env('DB_HOST'),
+            'port' => env('DB_PORT', 27017),
+            'database' => env('DB_DATABASE'),
+            'username' => env('DB_USERNAME'),
+            'password' => env('DB_PASSWORD'),
+            'options' => [
+                'database' => env('DB_AUTHENTICATION_DATABASE', 'admin') // required with Mongo 3+
+            ]
+        ],
 
         'sqlite' => [
             'driver' => 'sqlite',
