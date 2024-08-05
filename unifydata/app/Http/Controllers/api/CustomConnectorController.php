@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\api;
 
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\CustomConnector;
 use App\Http\Controllers\Controller;
@@ -11,106 +12,206 @@ class CustomConnectorController extends Controller
 {
     public function index()
     {
-        $connectors = CustomConnector::all();
+        $connectors = CustomConnector::select(['name', 'status'])->get();
         return response()->json($connectors);
+    }
+
+    public function testUrl(Request $request, $id)
+    {
+        $url = $request->all();
+
+        $connector = CustomConnector::find($id);
+        if (!$connector) {
+            return response()->json(['message' => 'Connector not found'], 404);
+        }
+
+        $streamUrl = $url['stream_url'];
+        $fullUrl = $this->getFullUrl($connector->base_url, $streamUrl);
+
+        $response = $this->makeAuthenticatedRequest($fullUrl, $connector->auth_type, $connector->auth_credentials);
+
+        if ($response->successful()) {
+            return response()->json(['message' => 'Connection successful', 'data' => $response->json()]);
+        } else {
+            return response()->json(['message' => 'Connection failed', 'status' => $response->status()]);
+        }
+    }
+
+    private function getFullUrl($baseUrl, $streamUrl)
+    {
+        if (filter_var($streamUrl, FILTER_VALIDATE_URL)) {
+            return $streamUrl;
+        } else {
+            return rtrim($baseUrl, '/') . '/' . ltrim($streamUrl, '/');
+        }
+    }
+
+    private function makeAuthenticatedRequest($url, $authType, $authCredentials)
+    {
+        $client = Http::withOptions(['base_uri' => $url]);
+
+        switch ($authType) {
+            case 'No_Auth':
+                $response = $client->get($url);
+                break;
+            case 'API_Key':
+                $response = $this->handleApiKeyAuth($client, $url, $authCredentials);
+                break;
+            case 'Bearer':
+                $response = $client->withToken($authCredentials['token'])->get($url);
+                break;
+            case 'Basic_HTTP':
+                $response = $client->withBasicAuth($authCredentials['username'], $authCredentials['password'])->get($url);
+                break;
+            case 'Session_Token':
+                $response = $client->withHeaders(['Session-Token' => $authCredentials['session_token']])->get($url);
+                break;
+            default:
+                throw new \Exception('Invalid authentication type');
+        }
+
+        return $response;
+    }
+
+    private function handleApiKeyAuth($client, $url, $authCredentials)
+    {
+        $injectInto = $authCredentials['inject_into'];
+        $paramName = $authCredentials['parameter_name'];
+        $apiKey = $authCredentials['api_key'];
+
+        switch ($injectInto) {
+            case 'Query Parameter':
+                $url = $this->injectApiKeyIntoUrl($url, $paramName, $apiKey);
+                $response = $client->get($url);
+                break;
+            case 'Header':
+                $response = $client->withHeaders([$paramName => $apiKey])->get($url);
+                break;
+            case 'Body data (urlencoded form)':
+                $response = $client->asForm()->post($url, [$paramName => $apiKey]);
+                break;
+            case 'Body JSON payload':
+                $response = $client->asJson()->post($url, [$paramName => $apiKey]);
+                break;
+            default:
+                throw new \Exception('Invalid injection method');
+        }
+
+        return $response;
+    }
+
+    // inject the api key into the request url
+    private function injectApiKeyIntoUrl($url, $paramName, $apiKey)
+    {
+        $parsedUrl = parse_url($url);
+        $query = isset($parsedUrl['query']) ? $parsedUrl['query'] . '&' : '';
+        $query .= urlencode($paramName) . '=' . urlencode($apiKey);
+
+        return $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'] . '?' . $query;
+    }
+
+    public function publishConnector(Request $request, $id)
+    {
+        $connector = CustomConnector::find($id);
+
+        if (!$connector) {
+            return response()->json(['message' => 'Connector not found'], 404);
+        }
+
+        $connector->status = 'published';
+        $connector->save();
+
+        return response()->json(['message' => 'Connector published successfully', 'data' => $connector]);
     }
 
     public function createConnector(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'base_url' => 'required|url',
-            'auth_type' => 'required|string|in:none,api_key,bearer,basic,oauth,session_token',
-            'auth_details' => 'nullable|array',
-        ]);
+        $data = $request->all();
 
-        $connector = CustomConnector::create($validated);
+        $connector = CustomConnector::where('name', $data['name'])->first();
+        if ($connector) {
+            // Connector exists, update streams
+            $existingStreams = json_decode($connector->streams, true);
+            $newStreams = array_map(function ($stream) {
+                return [
+                    'name' => $stream['name'],
+                    'url' => $stream['stream_url'],
+                ];
+            }, $data['streams']);
 
-        return response()->json(['message' => 'Connector created successfully', 'data' => $connector]);
-    }
+            $updatedStreams = array_merge($existingStreams, $newStreams);
 
-    public function addStream(Request $request, $id)
-    {
-        $connector = CustomConnector::findOrFail($id);
+            $connector->streams = json_encode($updatedStreams);
+            $connector->save();
 
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'url' => 'required|string',
-        ]);
+            return response()->json(['message' => 'Streams added successfully', 'data' => $connector]);
+        } else {
+            // Connector does not exist, create new connector
+            $streams = array_map(function ($stream) {
+                return [
+                    'name' => $stream['name'],
+                    'url' => $stream['stream_url'],
+                ];
+            }, $data['streams']);
 
-        $streams = json_decode($connector->streams, true) ?? [];
-        $streams[] = $validated;
+            $connectorData = [
+                'name' => $data['name'],
+                'base_url' => $data['base_url'],
+                'auth_type' => $data['auth_type'],
+                'auth_credentials' => $data['auth_credentials'],
+                'streams' => json_encode($streams),
+                'status' => 'draft',
+            ];
 
-        $connector->update(['streams' => json_encode($streams)]);
+            $connector = CustomConnector::create($connectorData);
 
-        return response()->json(['message' => 'Stream added successfully', 'data' => $connector]);
-    }
-
-    public function testStreamByUrl($url)
-{
-    $decodedUrl = urldecode($url);
-
-    // Extract the path part from the URL
-    $urlPath = parse_url($decodedUrl, PHP_URL_PATH);
-
-    // Find the connector that matches the stream URL or base URL
-    $connectors = CustomConnector::all();
-    $matchedConnector = null;
-    $matchedStream = null;
-
-    foreach ($connectors as $connector) {
-        $streams = json_decode($connector->streams, true);
-
-        // Check if any stream URL matches the decoded URL or URL path
-        foreach ($streams as $stream) {
-            $streamUrl = filter_var($stream['url'], FILTER_VALIDATE_URL) ? $stream['url'] : rtrim($connector->base_url, '/') . '/' . ltrim($stream['url'], '/');
-            if ($streamUrl == $decodedUrl || $stream['url'] == '/' . $urlPath) {
-                $matchedConnector = $connector;
-                $matchedStream = $stream;
-                break 2; // Break both loops
-            }
+            return response()->json(['message' => 'Connector created successfully', 'data' => $connector]);
         }
     }
 
-    if (!$matchedConnector || !$matchedStream) {
-        return response()->json(['message' => 'Connector not found for the provided URL'], 404);
-    }
 
-    // Determine if the stream URL is a full URL or a relative path
-    $streamUrl = filter_var($matchedStream['url'], FILTER_VALIDATE_URL) ? $matchedStream['url'] : rtrim($matchedConnector->base_url, '/') . '/' . ltrim($matchedStream['url'], '/');
-
-    // Make the authenticated request
-    $response = $this->makeAuthenticatedRequest($matchedConnector, $streamUrl);
-
-    if ($response->successful()) {
-        $matchedConnector->update(['published' => true]);
-        return response()->json(['message' => 'Stream tested successfully and connector published', 'data' => $response->json()]);
-    }
-
-    return response()->json(['message' => 'Failed to test stream', 'error' => $response->body()], 400);
-}
-
-    private function makeAuthenticatedRequest($connector, $url)
+    public function updateConnector(Request $request, $id)
     {
-        switch ($connector->auth_type) {
-            case 'api_key':
-                return Http::withHeaders([
-                    'Authorization' => 'API-Key ' . $connector->auth_details['api_key']
-                ])->get($url);
-            case 'bearer':
-                return Http::withToken($connector->auth_details['token'])->get($url);
-            case 'basic':
-                return Http::withBasicAuth($connector->auth_details['username'], $connector->auth_details['password'])->get($url);
-            case 'oauth':
-                // Implement OAuth logic here
-                break;
-            case 'session_token':
-                return Http::withHeaders([
-                    'Authorization' => 'Session ' . $connector->auth_details['token']
-                ])->get($url);
-            default:
-                return Http::get($url);
+        $connector = CustomConnector::find($id);
+
+        if (!$connector) {
+            return response()->json(['message' => 'Connector not found'], 404);
         }
+
+        $data = $request->all();
+        $connector->update([
+            'name' => $data['name'],
+            'base_url' => $data['base_url'],
+            'auth_type' => $data['auth_type'],
+            'auth_credentials' => $data['auth_credentials'],
+            'streams' => json_encode($data['streams']),
+        ]);
+
+        return response()->json(['message' => 'Connector updated successfully', 'data' => $connector]);
     }
 
+    public function deleteConnector($id)
+    {
+        $connector = CustomConnector::find($id);
+
+        if (!$connector) {
+            return response()->json(['message' => 'Connector not found'], 404);
+        }
+
+        $connector->delete();
+
+        return response()->json(['message' => 'Connector deleted successfully']);
+    }
+
+    public function listDrafts()
+    {
+        $drafts = CustomConnector::where('status', 'draft')->get();
+        return response()->json(['data' => $drafts]);
+    }
+
+    public function listPublished()
+    {
+        $published = CustomConnector::where('status', 'published')->get();
+        return response()->json(['data' => $published]);
+    }
 }

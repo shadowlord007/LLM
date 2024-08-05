@@ -12,11 +12,17 @@ class CustomConnector extends Model
     protected $connection = "mongodb";
     protected $collection = "custom_connectors";
 
-    protected $fillable = ['name', 'base_url', 'auth_type', 'auth_details', 'streams', 'is_published'];
-
+    protected $fillable = [
+        'name',
+        'base_url',
+        // 'stream_url',
+        'auth_type',
+        'auth_credentials',
+        'streams',
+        'status'
+    ];
     protected $casts = [
-        'auth_details' => 'array',
+        'auth_credentials' => 'array',
         'streams' => 'array',
-        'is_published' => 'boolean',
     ];
 }
