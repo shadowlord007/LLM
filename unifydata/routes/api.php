@@ -13,3 +13,5 @@ Route::put('connectors/{id}', [CustomConnectorController::class, 'updateConnecto
 Route::delete('connectors/{id}', [CustomConnectorController::class, 'deleteConnector']);
 Route::get('connectors/drafts', [CustomConnectorController::class, 'listDrafts']);
 Route::get('connectors/published', [CustomConnectorController::class, 'listPublished']);
+Route::get('connectors/selectedConnector/{id}', [CustomConnectorController::class, 'selectedConnectorDetails']);
+Route::delete('/connectors/deleteStream/{connectorId}/streams/{streamIndex}', [CustomConnectorController::class, 'deleteStream']);
