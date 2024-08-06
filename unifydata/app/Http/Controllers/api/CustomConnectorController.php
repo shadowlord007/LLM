@@ -26,40 +26,37 @@ class CustomConnectorController extends Controller
         }
 
         $streamUrl = $url['stream_url'];
+        $streamName = $url['name'];
         $fullUrl = $this->getFullUrl($connector->base_url, $streamUrl);
 
         $response = $this->makeAuthenticatedRequest($fullUrl, $connector->auth_type, $connector->auth_credentials);
-        $responseSchema = $this->getApiSchema($response);
+
+        $responseData = json_decode($response->getBody(), true);
+
+
+        $responseSchema = $this->getApiSchema($responseData);
         $headers = $response->getHeaders();
+        $status = $this->createStatus($streamName);
 
         if ($response->successful()) {
-            return response()->json(['message' => 'Connection successful', 'data' => $response->json(),'schema'=>$responseSchema,'headers'=>$headers]);
+            return response()->json(['message' => 'Connection successful', 'data' => $response, 'schema' => $responseSchema, 'headers' => $headers,'status'=> $status]);
         } else {
             return response()->json(['message' => 'Connection failed', 'status' => $response->status()]);
         }
     }
 
-    public function getApiSchema($response)
+    public function getApiSchema($responseData)
     {
-        $responseData = json_decode($response->getBody(), true);
-        
         // Generate the JSON schema
-        $schema = $this->generateSchema($responseData);
-        
-        // Return the schema as a JSON response
-        return response()->json($schema);
-    }
-
-    private function generateSchema(array $data)
-    {
-        $schema = [
+        $schema =  [
             '$schema' => 'http://json-schema.org/schema#',
             'type' => 'object',
             'additionalProperties' => true,
-            'properties' => $this->generateProperties($data)
+            'properties' => $this->generateProperties($responseData)
         ];
 
-        return $schema;
+        // Return the schema as a JSON response
+        return response()->json($schema);
     }
 
     private function generateProperties(array $data)
@@ -97,9 +94,28 @@ class CustomConnectorController extends Controller
         if (array() === $array) return false;
         return array_keys($array) !== range(0, count($array) - 1);
     }
-   
 
-   
+    private function createStatus($streamName)
+    {
+
+        return $status =[
+            [
+                'type' => 'STREAM',
+                'stream' => [
+                    'stream_descriptor' => [
+                        'name' => $streamName
+                    ],
+                    'stream_state' => [
+                        '__ab_no_cursor_state_message' => true
+                    ]
+                ],
+                'sourceStats' => [
+                    'recordCount' => 1
+                ]
+            ]
+        ];
+    }
+
 
     private function getFullUrl($baseUrl, $streamUrl)
     {
@@ -130,6 +146,8 @@ class CustomConnectorController extends Controller
             case 'Session_Token':
                 $response = $client->withHeaders(['Session-Token' => $authCredentials['session_token']])->get($url);
                 break;
+            case 'OAuth':
+                
             default:
                 throw new \Exception('Invalid authentication type');
         }
@@ -277,5 +295,53 @@ class CustomConnectorController extends Controller
     {
         $published = CustomConnector::select(['name', 'status'])->where('status', 'published')->get();
         return response()->json(['data' => $published]);
+    }
+
+    public function selectedConnectorDetails($id)
+    {
+        //  find the connector by its ID
+        $connector = CustomConnector::find($id);
+
+        // Check if the connector was found
+        if (!$connector) {
+            return response()->json(['message' => 'Connector not found'], 404);
+        }
+
+        // Return the connector details as a JSON response
+        return response()->json(['data' => $connector]);
+    }
+    public function deleteStream($connectorId, $streamIndex)
+    {
+        // Find the connector by ID
+        $connector = CustomConnector::find($connectorId);
+
+        if (!$connector) {
+            return response()->json(['message' => 'Connector not found'], 404);
+        }
+       
+        // Decode the streams JSON into an array
+        $streams = json_decode($connector->streams, true);
+
+        if (!isset($streams[$streamIndex])) {
+            return response()->json(['message' => 'Stream not found at the given index'], 404);
+        }
+
+        // Remove the stream at the given index
+        unset($streams[$streamIndex]);
+
+        // If no stream left, delete the connector
+        if (count($streams) === 0) {
+            $connector->delete();
+            return response()->json(['message' => 'Connector deleted as it contions no stream now']);
+        } 
+
+        // Re-index the array to ensure keys are sequential  
+        $streams = array_values($streams);
+
+        // Update the connector with the modified streams
+        $connector->streams = json_encode($streams);
+        $connector->save();
+
+        return response()->json(['message' => 'Stream deleted successfully', 'data' => $connector]);
     }
 }

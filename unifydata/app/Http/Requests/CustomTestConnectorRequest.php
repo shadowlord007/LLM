@@ -23,6 +23,7 @@ class CustomTestConnectorRequest extends FormRequest
     {
         return [
             'stream_url' => 'required|string',
+            'name'=>'required|string'
         ];
     }
 }
