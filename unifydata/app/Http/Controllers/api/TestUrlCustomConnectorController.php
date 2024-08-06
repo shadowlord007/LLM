@@ -190,7 +190,4 @@ class TestUrlCustomConnectorController extends Controller
 
         return $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'] . '?' . $query;
     }
-
-    
-
 }
