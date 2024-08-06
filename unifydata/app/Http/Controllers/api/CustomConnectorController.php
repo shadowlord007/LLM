@@ -39,7 +39,7 @@ class CustomConnectorController extends Controller
         $status = $this->createStatus($streamName);
 
         if ($response->successful()) {
-            return response()->json(['message' => 'Connection successful', 'data' => $response, 'schema' => $responseSchema, 'headers' => $headers,'status'=> $status]);
+            return response()->json(['message' => 'Connection successful', 'data' => $responseData, 'schema' => $responseSchema, 'headers' => $headers,'status'=> $status]);
         } else {
             return response()->json(['message' => 'Connection failed', 'status' => $response->status()]);
         }
@@ -147,7 +147,7 @@ class CustomConnectorController extends Controller
                 $response = $client->withHeaders(['Session-Token' => $authCredentials['session_token']])->get($url);
                 break;
             case 'OAuth':
-                
+
             default:
                 throw new \Exception('Invalid authentication type');
         }
