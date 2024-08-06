@@ -29,13 +29,77 @@ class CustomConnectorController extends Controller
         $fullUrl = $this->getFullUrl($connector->base_url, $streamUrl);
 
         $response = $this->makeAuthenticatedRequest($fullUrl, $connector->auth_type, $connector->auth_credentials);
+        $responseSchema = $this->getApiSchema($response);
+        $headers = $response->getHeaders();
 
         if ($response->successful()) {
-            return response()->json(['message' => 'Connection successful', 'data' => $response->json()]);
+            return response()->json(['message' => 'Connection successful', 'data' => $response->json(),'schema'=>$responseSchema,'headers'=>$headers]);
         } else {
             return response()->json(['message' => 'Connection failed', 'status' => $response->status()]);
         }
     }
+
+    public function getApiSchema($response)
+    {
+        $responseData = json_decode($response->getBody(), true);
+        
+        // Generate the JSON schema
+        $schema = $this->generateSchema($responseData);
+        
+        // Return the schema as a JSON response
+        return response()->json($schema);
+    }
+
+    private function generateSchema(array $data)
+    {
+        $schema = [
+            '$schema' => 'http://json-schema.org/schema#',
+            'type' => 'object',
+            'additionalProperties' => true,
+            'properties' => $this->generateProperties($data)
+        ];
+
+        return $schema;
+    }
+
+    private function generateProperties(array $data)
+    {
+        $properties = [];
+
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                if ($this->isAssoc($value)) {
+                    $properties[$key] = [
+                        'type' => ['object', 'null'],
+                        'properties' => $this->generateProperties($value)
+                    ];
+                } else {
+                    $properties[$key] = [
+                        'type' => ['array', 'null'],
+                        'items' => [
+                            'type' => ['object', 'null'],
+                            'properties' => $this->generateProperties($value[0] ?? [])
+                        ]
+                    ];
+                }
+            } else {
+                $properties[$key] = [
+                    'type' => [gettype($value), 'null']
+                ];
+            }
+        }
+
+        return $properties;
+    }
+
+    private function isAssoc(array $array)
+    {
+        if (array() === $array) return false;
+        return array_keys($array) !== range(0, count($array) - 1);
+    }
+   
+
+   
 
     private function getFullUrl($baseUrl, $streamUrl)
     {
@@ -205,13 +269,13 @@ class CustomConnectorController extends Controller
 
     public function listDrafts()
     {
-        $drafts = CustomConnector::where('status', 'draft')->get();
+        $drafts = CustomConnector::select(['name', 'status'])->where('status', 'draft')->get();
         return response()->json(['data' => $drafts]);
     }
 
     public function listPublished()
     {
-        $published = CustomConnector::where('status', 'published')->get();
+        $published = CustomConnector::select(['name', 'status'])->where('status', 'published')->get();
         return response()->json(['data' => $published]);
     }
 }
