@@ -10,7 +10,7 @@ Route::controller(CustomConnectorController::class)->group(function () {
     Route::post('/connectors', 'createConnector')->middleware('customValidation:create');
     Route::put('/connectors/publish/{id}', 'publishConnector');
     Route::put('/connectors/{id}', 'updateConnector')->middleware('customValidation:baseUpdate');
-    Route::put('/connectors/{id}/updateStream/{index}', 'updateConnector')->middleware('customValidation:streamUpdate');
+    Route::put('/connectors/{id}/updateStream/{index}', 'updateStreams')->middleware('customValidation:streamUpdate');
     Route::delete('/connectors/{id}',  'deleteConnector');
     Route::get('/connectors/drafts', 'listDrafts');
     Route::get('/connectors/published',  'listPublished');

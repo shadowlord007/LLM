@@ -99,9 +99,11 @@ class CustomConnectorController extends Controller
     }
     public function updateStreams(Request $request, $id,$index)
     {
+       
         $connector = CustomConnector::find($id);
         $data = $request->all();
         $existingStreams = json_decode($connector->streams, true);
+        
         $existingStreams[$index] = $data;
 
         if (!$connector) {

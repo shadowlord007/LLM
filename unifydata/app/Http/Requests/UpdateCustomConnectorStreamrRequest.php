@@ -22,11 +22,11 @@ class UpdateCustomConnectorStreamrRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'streams' => 'required|array',
-            'streams.*.name' => 'required|string',
-            'streams.*.stream_url' => 'required|string',
-            'streams.*.method' => 'required|string|in:GET,POST',
-            'streams.*.primary_key' => 'nullable|array',
+            
+            'name' => 'required|string',
+            'stream_url' => 'required|string',
+            'method' => 'required|string|in:GET,POST',
+            'primary_key' => 'nullable|array',
 
             'pagination' => 'nullable|array',
             'pagination.enabled' => 'nullable|boolean',
