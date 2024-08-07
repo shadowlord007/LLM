@@ -13,16 +13,7 @@ services:
     ports:
       - "8081:80"
     depends_on:
-      - postgresql
       - mongo
-
-  postgresql:
-    image: postgres:15
-    container_name: postgresql
-    volumes:
-      - dbdata:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
 
   mongo:
     image: mongo:latest
@@ -31,7 +22,7 @@ services:
     volumes:
       - mongodb_data:/data/db
     ports:
-      - "27017:27017"
+      - "27018:27017"
 
   redis:
     image: redis:alpine
