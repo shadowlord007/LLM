@@ -23,7 +23,9 @@ class CustomTestConnectorRequest extends FormRequest
     {
         return [
             'stream_url' => 'required|string',
-            'name'=>'required|string'
+            'name'=>'required|string',
+            'method'=>'required|string|in:GET,POST',
+            'primary_key' => 'nullable|array',
         ];
     }
 }

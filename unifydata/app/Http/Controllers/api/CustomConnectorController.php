@@ -30,7 +30,7 @@ class CustomConnectorController extends Controller
         return response()->json(['message' => 'Connector published successfully', 'data' => $connector]);
     }
 
-    public function createConnector(Request $request)
+    public function createConnectorAndAddStream(Request $request)
     {
         $data = $request->all();
 
