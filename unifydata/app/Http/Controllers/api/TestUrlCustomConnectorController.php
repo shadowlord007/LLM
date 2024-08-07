@@ -24,27 +24,26 @@ class TestUrlCustomConnectorController extends Controller
         $primaryKey = $url['primary_key'] ?? [];
         $fullUrl = $this->getFullUrl($connector->base_url, $streamUrl);
 
-        $response = $this->makeAuthenticatedRequest($fullUrl, $connector->auth_type, $connector->auth_credentials, $method);
-
-        $responseData = json_decode($response->getBody(), true);
-
-
-        if (is_null($responseData)) {
-            return response()->json(['message' => 'Invalid JSON response from the API'], 422);
-        }
-
-        $responseSchema = $this->getApiSchema($responseData);
-        $headers = $response->getHeaders();
-        $status = $this->createStatus($streamName);
-        // Validate primary key
-        if (!$this->validatePrimaryKey($responseData, $primaryKey)) {
-            return response()->json(['message' => 'Primary key validation failed','data' => $responseData, 'schema' => $responseSchema, 'headers' => $headers,'status'=> $status], 422);
-        }
-
-        if ($response->successful()) {
-            return response()->json(['message' => 'Connection successful', 'data' => $responseData, 'schema' => $responseSchema, 'headers' => $headers,'status'=> $status]);
-        } else {
-            return response()->json(['message' => 'Connection failed', 'status' => $response->status()]);
+        try {
+            $response = $this->makeAuthenticatedRequest($fullUrl, $connector->auth_type, $connector->auth_credentials, $method);
+            $responseData = json_decode($response->getBody(), true);
+            if (is_null($responseData)) {
+                return response()->json(['message' => 'Invalid JSON response from the API'], 422);
+            }
+            $responseSchema = $this->getApiSchema($responseData);
+            $headers = $response->getHeaders();
+            $status = $this->createStatus($streamName);
+            // Validate primary key
+            if (!$this->validatePrimaryKey($responseData, $primaryKey)) {
+                return response()->json(['message' => 'Primary key validation failed','data' => $responseData, 'schema' => $responseSchema, 'headers' => $headers,'status'=> $status], 422);
+            }
+            if ($response->successful()) {
+                return response()->json(['message' => 'Connection successful', 'data' => $responseData, 'schema' => $responseSchema, 'headers' => $headers,'status'=> $status]);
+            } else {
+                return response()->json(['message' => 'Connection failed', 'status' => $response->status()]);
+            }
+        }catch(\Exception $e) {
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
 
