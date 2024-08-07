@@ -36,7 +36,7 @@ class CustomConnectorController extends Controller
         $connector = CustomConnector::where('name', $data['name'])->first();
 
         if ($connector) {
-            return $this->transformStreams($data,$connector);
+            return $this->transformStreams($data, $connector);
         } else {
             $connectorData = [
                 'name' => $data['name'],
@@ -48,22 +48,31 @@ class CustomConnectorController extends Controller
             ];
 
             $connector = CustomConnector::create($connectorData);
-            $this->transformStreams($data,$connector);
+            $this->transformStreams($data, $connector);
 
             return response()->json(['message' => 'Connector and stream created successfully', 'data' => $connector]);
         }
     }
 
-    private function transformStreams($data,$connector)
+    private function transformStreams($data, $connector)
     {
 
         $existingStreams = json_decode($connector->streams, true);
+
+        $existingStreamsName = array_column($existingStreams, 'name');
+        $streams = $data['streams'];
+        $streamName = array_column($streams, 'name');
+        if (in_array($streamName[0], $existingStreamsName)) {
+
+            return response()->json(['message' => 'Error! Stream Name must be unique.']);
+        }
+
         $newStreams = array_map(function ($stream) {
             return [
                 'name' => $stream['name'],
                 'url' => $stream['stream_url'],
-                'method'=> $stream['method'],
-                'primary_key'=>$stream['primary_key'] ?? [],
+                'method' => $stream['method'],
+                'primary_key' => $stream['primary_key'] ?? [],
             ];
         }, $data['streams']);
 
@@ -75,9 +84,6 @@ class CustomConnectorController extends Controller
         return response()->json(['message' => 'Streams added successfully', 'data' => $connector]);
     }
 
-
-
-
     public function updateConnector(Request $request, $id)
     {
         $connector = CustomConnector::find($id);
@@ -87,13 +93,23 @@ class CustomConnectorController extends Controller
         }
 
         $data = $request->all();
-        $connector->update([
-            'name' => $data['name'],
-            'base_url' => $data['base_url'],
-            'auth_type' => $data['auth_type'],
-            'auth_credentials' => $data['auth_credentials'],
-            'streams' => json_encode($data['streams']),
-        ]);
+        $connector->update($data);
+
+        return response()->json(['message' => 'Connector updated successfully', 'data' => $connector]);
+    }
+    public function updateStreams(Request $request, $id,$index)
+    {
+        $connector = CustomConnector::find($id);
+        $data = $request->all();
+        $existingStreams = json_decode($connector->streams, true);
+        $existingStreams[$index] = $data;
+
+        if (!$connector) {
+            return response()->json(['message' => 'Connector not found'], 404);
+        }
+
+        $connector->streams = json_encode($existingStreams);
+        $connector->save();
 
         return response()->json(['message' => 'Connector updated successfully', 'data' => $connector]);
     }
