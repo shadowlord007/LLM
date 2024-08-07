@@ -30,9 +30,7 @@ class TestUrlCustomConnectorController extends Controller
 
         try {
             $response = $this->makeAuthenticatedRequest($fullUrl, $connector->auth_type, $connector->auth_credentials, $method);
-
             $responseData = json_decode($response->getBody(), true);
-
 
             if (is_null($responseData)) {
                 return response()->json(['message' => 'Invalid JSON response from the API'], 422);

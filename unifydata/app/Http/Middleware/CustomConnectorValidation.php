@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Http\Requests\CustomTestConnectorRequest;
 use App\Http\Requests\CustomCreateConnectorRequest;
-use App\Http\Requests\CustomUpdateConnectorRequest;
+use App\Http\Requests\UpdateCustomConnectorRequest;
+use App\Http\Requests\UpdateCustomConnectorStreamrRequest;
 
 class CustomConnectorValidation
 {
@@ -20,9 +21,11 @@ class CustomConnectorValidation
     {
         if($key === 'create'){
             app(CustomCreateConnectorRequest::class);
-        } else if($key === 'update'){
-            app(CustomUpdateConnectorRequest::class);
-        } else if ($key === 'test'){
+        } else if($key === 'baseUpdate'){
+            app(UpdateCustomConnectorRequest::class);
+        } else if ($key === 'streamUpdate'){
+            app(UpdateCustomConnectorStreamrRequest::class);
+        }else if ($key === 'test'){
             app(CustomTestConnectorRequest::class);
         }
         return $next($request);

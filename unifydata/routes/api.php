@@ -7,10 +7,10 @@ use App\Http\Controllers\api\TestUrlCustomConnectorController;
 
 Route::controller(CustomConnectorController::class)->group(function () {
     Route::get('/connectors', 'index');
-    Route::post('/connectors', 'createConnector')->middleware('customValidation:create');
+    Route::post('/connectors', 'createConnectorAndAddStream')->middleware('customValidation:create');
     Route::put('/connectors/publish/{id}', 'publishConnector');
-    Route::put('/connectors/{id}', 'updateConnector')->middleware('customValidation:update');
-    Route::put('/connectors/{id}/updateStream/{index}', 'updateConnector')->middleware('customValidation:update');
+    Route::put('/connectors/{id}', 'updateConnector')->middleware('customValidation:baseUpdate');
+    Route::put('/connectors/{id}/updateStream/{index}', 'updateConnector')->middleware('customValidation:streamUpdate');
     Route::delete('/connectors/{id}',  'deleteConnector');
     Route::get('/connectors/drafts', 'listDrafts');
     Route::get('/connectors/published',  'listPublished');

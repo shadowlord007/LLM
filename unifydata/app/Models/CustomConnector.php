@@ -15,14 +15,15 @@ class CustomConnector extends Model
     protected $fillable = [
         'name',
         'base_url',
-        // 'stream_url',
         'auth_type',
         'auth_credentials',
         'streams',
+        'pagination',
         'status'
     ];
     protected $casts = [
         'auth_credentials' => 'array',
         'streams' => 'array',
+        'pagination' => 'array',
     ];
 }
