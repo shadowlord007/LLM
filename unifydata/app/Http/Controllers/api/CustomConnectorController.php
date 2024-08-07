@@ -30,54 +30,52 @@ class CustomConnectorController extends Controller
         return response()->json(['message' => 'Connector published successfully', 'data' => $connector]);
     }
 
-    public function createConnectorAndAddStream(Request $request)
+    public function createConnector(Request $request)
     {
         $data = $request->all();
-
         $connector = CustomConnector::where('name', $data['name'])->first();
+
         if ($connector) {
-            // Connector exists, update streams
-            $existingStreams = json_decode($connector->streams, true);
-            $newStreams = array_map(function ($stream) {
-                return [
-                    'name' => $stream['name'],
-                    'url' => $stream['stream_url'],
-                    'method' => $stream['method'],
-                    'primary_key' => $stream['primary_key'] ?? [],
-                ];
-            }, $data['streams']);
-
-            $updatedStreams = array_merge($existingStreams, $newStreams);
-
-            $connector->streams = json_encode($updatedStreams);
-            $connector->save();
-
-            return response()->json(['message' => 'Streams added successfully', 'data' => $connector]);
+            return $this->transformStreams($data,$connector);
         } else {
-            // Connector does not exist, create new connector
-            $streams = array_map(function ($stream) {
-                return [
-                    'name' => $stream['name'],
-                    'url' => $stream['stream_url'],
-                    'method' => $stream['method'],
-                    'primary_key' => $stream['primary_key'] ?? [],
-                ];
-            }, $data['streams']);
-
             $connectorData = [
                 'name' => $data['name'],
                 'base_url' => $data['base_url'],
                 'auth_type' => $data['auth_type'],
                 'auth_credentials' => $data['auth_credentials'],
-                'streams' => json_encode($streams),
+                'streams' => json_encode([]),
                 'status' => 'draft',
             ];
 
             $connector = CustomConnector::create($connectorData);
+            $this->transformStreams($data,$connector);
 
-            return response()->json(['message' => 'Connector created successfully', 'data' => $connector]);
+            return response()->json(['message' => 'Connector and stream created successfully', 'data' => $connector]);
         }
     }
+
+    private function transformStreams($data,$connector)
+    {
+
+        $existingStreams = json_decode($connector->streams, true);
+        $newStreams = array_map(function ($stream) {
+            return [
+                'name' => $stream['name'],
+                'url' => $stream['stream_url'],
+                'method'=> $stream['method'],
+                'primary_key'=>$stream['primary_key'] ?? [],
+            ];
+        }, $data['streams']);
+
+        $updatedStreams = array_merge($existingStreams, $newStreams);
+
+        $connector->streams = json_encode($updatedStreams);
+        $connector->save();
+
+        return response()->json(['message' => 'Streams added successfully', 'data' => $connector]);
+    }
+
+
 
 
     public function updateConnector(Request $request, $id)
