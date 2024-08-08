@@ -112,11 +112,11 @@ class CustomConnectorController extends Controller
     //To update streams
     public function updateStreams(Request $request, $id,$index)
     {
-       
+
         $connector = CustomConnector::find($id);
         $data = $request->all();
         $existingStreams = json_decode($connector->streams, true);
-        
+
         $existingStreams[$index] = $data;
 
         if (!$connector) {
@@ -153,13 +153,13 @@ class CustomConnectorController extends Controller
     public function listDrafts()
     {
         $drafts = CustomConnector::select(['name', 'status'])->where('status', 'draft')->get();
-        return response()->json(['data' => $drafts]);
+        return response()->json($drafts);
     }
     //Return list of publish connectors
     public function listPublished()
     {
         $published = CustomConnector::select(['name', 'status'])->where('status', 'published')->get();
-        return response()->json(['data' => $published]);
+        return response()->json($published);
     }
     //Return details of selected connectors
     public function selectedConnectorDetails($id)
