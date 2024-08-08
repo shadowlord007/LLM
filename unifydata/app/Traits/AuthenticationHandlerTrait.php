@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 trait AuthenticationHandlerTrait
 {
+    //to handle Auth request for url
     public function makeAuthenticatedRequest($url, $authType, $authCredentials, $method)
     {
         $client = Http::withOptions(['base_uri' => $url]);
@@ -37,6 +38,7 @@ trait AuthenticationHandlerTrait
         return $response;
     }
 
+    //to handle All Api key for sending request accordingly
     private function handleApiKeyAuth($client, $url, $authCredentials, $method)
     {
         $injectInto = $authCredentials['inject_into'];
@@ -63,10 +65,10 @@ trait AuthenticationHandlerTrait
 
         return $response;
     }
-
+    
+    //To validate OAuth and get response from url
     private function handleOAuth($url, $authCredentials)
     {
-        // Validate OAuth credentials
         $validatedData  = $authCredentials->validate([
             'grant_type' => 'required|string',
             'client_id' => 'required|string',
@@ -75,7 +77,6 @@ trait AuthenticationHandlerTrait
             'token_url' => 'required|url',
         ]);
 
-        // Request for access token
         $tokenResponse = Http::asForm()->post($validatedData['token_url'], [
             'grant_type' => $validatedData['grant_type'],
             'client_id' => $validatedData['client_id'],
@@ -95,7 +96,6 @@ trait AuthenticationHandlerTrait
 
         $accessToken = $tokenData['access_token'];
 
-        // Fetch data from the URL using access token
         $dataResponse = Http::withToken($accessToken)->get($url);
 
         if ($dataResponse->successful()) {
@@ -115,15 +115,16 @@ trait AuthenticationHandlerTrait
         return $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'] . '?' . $query;
     }
 
+    //Validate weather primary key exists or not 
     private function validatePrimaryKey(array $responseData, array $primaryKey)
     {
         if (empty($primaryKey)) {
-            return true; // No primary key specified, skip validation
+            return true; 
         }
 
         foreach ($primaryKey as $key) {
             if (!array_key_exists($key, $responseData)) {
-                return false; // Primary key field not found in response data
+                return false; 
             }
         }
 

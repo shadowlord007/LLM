@@ -4,9 +4,9 @@ namespace App\Traits;
 
 trait ResponseGenerationTrait
 {
-    public function getApiSchema($responseData)
+    // Define the base JSON schema with object type and additional properties allowed
+    public function generateSchema($responseData)
     {
-        // Generate the JSON schema
         $schema =  [
             '$schema' => 'http://json-schema.org/schema#',
             'type' => 'object',
@@ -18,6 +18,7 @@ trait ResponseGenerationTrait
         return response()->json($schema);
     }
 
+// Generate and assign the properties section of the schema
     private function generateProperties(array $data)
     {
         $properties = [];
@@ -27,7 +28,7 @@ trait ResponseGenerationTrait
                 if ($this->isAssoc($value)) {
                     $properties[$key] = [
                         'type' => ['object', 'null'],
-                        'properties' => $this->generateProperties($value)
+                        'properties' => $this->generateProperties($value) // Recursively generate properties for the object
                     ];
                 } else {
                     $properties[$key] = [
@@ -48,6 +49,7 @@ trait ResponseGenerationTrait
         return $properties;
     }
 
+     // Check array is associative or not
     private function isAssoc(array $array)
     {
         if (array() === $array) return false;
@@ -55,6 +57,7 @@ trait ResponseGenerationTrait
     }
 
 
+    //Create state of the response
     private function createState($streamName)
     {
 

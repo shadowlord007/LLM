@@ -25,8 +25,6 @@ class CustomConnectorValidation
             app(UpdateCustomConnectorRequest::class);
         } else if ($key === 'streamUpdate'){
             app(UpdateCustomConnectorStreamrRequest::class);
-        }else if ($key === 'test'){
-            app(CustomTestConnectorRequest::class);
         }
         return $next($request);
     }

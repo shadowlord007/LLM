@@ -28,7 +28,7 @@ class CustomCreateConnectorRequest extends FormRequest
             'auth_credentials' => 'nullable|array',
             'streams' => 'required|array',
             'streams.*.name' => 'required|string',
-            'streams.*.stream_url' => 'required|string',
+            'streams.*.url' => 'required|string',
             'streams.*.method' => 'required|string|in:GET,POST',
             'streams.*.primary_key' => 'nullable|array',
         ];
