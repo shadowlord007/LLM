@@ -13,20 +13,26 @@ class TestUrlCustomConnectorController extends Controller
 {
     use ResponseGenerationTrait;
     use AuthenticationHandlerTrait;
-    public function testUrl(Request $request, $id)
+    public function testUrl(Request $request, $id, $streamIndex)
     {
-        $url = $request->all();
 
         $connector = CustomConnector::find($id);
         if (!$connector) {
             return response()->json(['message' => 'Connector not found'], 404);
         }
 
-        $streamUrl = $url['stream_url'];
-        $streamName = $url['name'];
-        $method = $url['method'];
-        $primaryKey = $url['primary_key'] ?? [];
-        $fullUrl = $this->getFullUrl($connector->base_url, $streamUrl);
+        $existingStream = json_decode($connector->streams);
+        if($streamIndex >= count($existingStream))
+        {
+            return response()->json(['message' => 'stream not found'], 404);
+        }
+        $stream = $existingStream[$streamIndex];
+
+        $streamUrl = $stream->url;
+        $streamName = $stream->name;
+        $method = $stream->method;
+        $primaryKey = $stream->primary_key;
+        $fullUrl = $this->getFullUrl($connector->base_url, $streamUrl); //using to make an absoulte path
 
         try {
             $response = $this->makeAuthenticatedRequest($fullUrl, $connector->auth_type, $connector->auth_credentials, $method);
@@ -42,13 +48,48 @@ class TestUrlCustomConnectorController extends Controller
             $state = $this->createState($streamName);
             // Validate primary key
             if (!$this->validatePrimaryKey($responseData, $primaryKey)) {
-                return response()->json(['message' => 'Primary key validation failed', 'data' => $responseData, 'schema' => $responseSchema, 'headers' => $headers, 'state' => $state], 422);
+                return response()->json([
+                    'data' => $responseData,
+                    'schema' => $responseSchema,
+                    'response' =>[
+                        'headers'=>$headers,
+                        'status'=>'422',
+                        'body'=>[
+                            'message' => 'Primary key validation failed',
+                            'code'=>'422',
+                        ]
+                    ],
+                    'state' => $state
+                ]);
             }
 
             if ($response->successful()) {
-                return response()->json(['message' => 'Connection successful', 'data' => $responseData, 'schema' => $responseSchema, 'headers' => $headers, 'status' => $state]);
+                return response()->json([
+                    'data' => $responseData,
+                    'schema' => $responseSchema,
+                    'response' =>[
+                        'headers'=>$headers,
+                        'status'=>'200',
+                        'body'=>[
+                            'message' => 'Connection successful',
+                            'code'=>'200'
+                        ]
+                    ],
+                    'status' => $state
+                ]);
+
             } else {
-                return response()->json(['message' => 'Connection failed', 'status' => $response->status()]);
+                return response()->json([
+                    'status' => $response->status(),
+                    'response' =>[
+                        'headers'=>$headers,
+                        'status'=>'404',
+                        'body'=>[
+                            'message' => 'Connection failed',
+                            'code'=>'404'
+                        ]
+                    ]
+                ]);
             }
         } catch (\Exception $e) {
             return response()->json(['message'=> "Error".$e->getMessage()],500);

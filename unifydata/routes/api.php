@@ -18,4 +18,4 @@ Route::controller(CustomConnectorController::class)->group(function () {
     Route::delete('/custom-connectors/delete-stream/{connectorId}/streams/{streamIndex}',  'deleteStream');
 });
 
-Route::get('/test-url/{id}', [TestUrlCustomConnectorController::class, 'testUrl'])->middleware('customValidation:test');
+Route::get('/test-url/{id}/stream-url/{index}', [TestUrlCustomConnectorController::class, 'testUrl']);
