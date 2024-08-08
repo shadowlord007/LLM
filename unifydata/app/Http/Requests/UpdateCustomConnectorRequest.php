@@ -26,7 +26,7 @@ class UpdateCustomConnectorRequest extends FormRequest
             'base_url' => 'required|url',
             'auth_type' => 'required|string',
             'auth_credentials' => 'nullable|array',
-            'streams' => 'required|array',
+            'streams' => 'nullable|array',
         ];
     }
 }

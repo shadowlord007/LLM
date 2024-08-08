@@ -4,10 +4,10 @@ namespace App\Http\Controllers\api;
 
 use Illuminate\Http\Request;
 use App\Models\CustomConnector;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Http;
 use App\Traits\ResponseGenerationTrait;
 use App\Traits\AuthenticationHandlerTrait;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Http;
 
 class TestUrlCustomConnectorController extends Controller
 {
@@ -30,6 +30,7 @@ class TestUrlCustomConnectorController extends Controller
 
         try {
             $response = $this->makeAuthenticatedRequest($fullUrl, $connector->auth_type, $connector->auth_credentials, $method);
+
             $responseData = json_decode($response->getBody(), true);
 
             if (is_null($responseData)) {

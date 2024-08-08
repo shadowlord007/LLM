@@ -9,6 +9,7 @@ trait AuthenticationHandlerTrait
     public function makeAuthenticatedRequest($url, $authType, $authCredentials, $method)
     {
         $client = Http::withOptions(['base_uri' => $url]);
+        
 
         switch ($authType) {
             case 'No Auth':

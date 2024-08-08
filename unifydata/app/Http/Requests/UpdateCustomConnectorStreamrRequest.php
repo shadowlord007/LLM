@@ -22,7 +22,7 @@ class UpdateCustomConnectorStreamrRequest extends FormRequest
     public function rules(): array
     {
         return [
-            
+
             'name' => 'required|string',
             'stream_url' => 'required|string',
             'method' => 'required|string|in:GET,POST',
@@ -36,9 +36,9 @@ class UpdateCustomConnectorStreamrRequest extends FormRequest
             'pagination.inject_enabled' => 'nullable|boolean|required_if:pagination.enabled,true',
             'pagination.inject_into' => 'nullable|required_if:pagination.inject_enabled,true|in:Query Parameter,Header,Path,Body data (urlencoded form),Body JSON payload',
             'pagination.parameter_name' => 'nullable|required_if:pagination.inject_into,Query Parameter|string',
-            'pagination.parameter_name' => 'nullable|required_if:pagination.inject_into,Header|string',
-            'pagination.parameter_name' => 'nullable|required_if:pagination.inject_into,Body data (urlencoded form)|string',
-            'pagination.parameter_name' => 'nullable|required_if:pagination.inject_into,Body JSON payload|string',
+            'pagination.header_name' => 'nullable|required_if:pagination.inject_into,Header|string',
+            'pagination.key_name' => 'nullable|required_if:pagination.inject_into,|in:Body data (urlencoded form),Body JSON payload|string',
+
 
             'pagination.page_size' => 'nullable|integer|required_if:pagination.strategy,Page Increment',
             'pagination.start_from_page' => 'nullable|integer|required_if:pagination.strategy,Page Increment',
@@ -47,7 +47,7 @@ class UpdateCustomConnectorStreamrRequest extends FormRequest
             'pagination.path' => 'nullable|required_if:pagination.next_page_cursor,Response|string',
             'pagination.path' => 'nullable|required_if:pagination.next_page_cursor,Header|string',
 
-            'pagination.cursor_value' => 'require|required_if:pagination.next_page_cursor,Custom|string',
+            'pagination.cursor_value' => 'nullable|required_if:pagination.next_page_cursor,Custom|string',
             'pagination.stop_condition' => 'nullable|required_if:pagination.next_page_cursor,Custom|string',
             'pagination.page_size' => 'nullable|integer|required_if:pagination.strategy,Cursor Pagination',
 
