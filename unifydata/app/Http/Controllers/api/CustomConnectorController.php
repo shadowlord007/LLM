@@ -27,7 +27,9 @@ class CustomConnectorController extends Controller
         $connector->status = 'published';
         $connector->save();
 
-        return response()->json(['message' => 'Connector published successfully', 'data' => $connector]);
+        $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
+
+        return response()->json(['message' => 'Connector published successfully', $connector]);
     }
 
     public function createConnector(Request $request)
@@ -50,7 +52,7 @@ class CustomConnectorController extends Controller
             $connector = CustomConnector::create($connectorData);
             $this->transformStreams($data, $connector);
 
-            return response()->json(['message' => 'Connector and stream created successfully', 'data' => $connector]);
+            return response()->json(['message' => 'Connector and stream created successfully', $connector]);
         }
     }
 
@@ -80,8 +82,9 @@ class CustomConnectorController extends Controller
 
         $connector->streams = json_encode($updatedStreams);
         $connector->save();
+        $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
 
-        return response()->json(['message' => 'Streams added successfully', 'data' => $connector]);
+        return response()->json(['message' => 'Streams added successfully',  $connector]);
     }
 
     public function updateConnector(Request $request, $id)
@@ -95,7 +98,9 @@ class CustomConnectorController extends Controller
         $data = $request->all();
         $connector->update($data);
 
-        return response()->json(['message' => 'Connector updated successfully', 'data' => $connector]);
+
+        $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
+        return response()->json(['message' => 'Connector updated successfully', $connector]);
     }
     public function updateStreams(Request $request, $id,$index)
     {
@@ -113,7 +118,8 @@ class CustomConnectorController extends Controller
         $connector->streams = json_encode($existingStreams);
         $connector->save();
 
-        return response()->json(['message' => 'Connector updated successfully', 'data' => $connector]);
+        $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
+        return response()->json(['message' => 'Connector updated successfully', $connector]);
     }
 
     public function deleteConnector($id)
@@ -143,49 +149,40 @@ class CustomConnectorController extends Controller
 
     public function selectedConnectorDetails($id)
     {
-        //  find the connector by its ID
         $connector = CustomConnector::find($id);
 
-        // Check if the connector was found
         if (!$connector) {
             return response()->json(['message' => 'Connector not found'], 404);
         }
 
-        // Return the connector details as a JSON response
-        return response()->json(['data' => $connector]);
+        $connector->streams = json_decode($connector->streams, true);
+        return response()->json($connector);
     }
     public function deleteStream($connectorId, $streamIndex)
     {
-        // Find the connector by ID
         $connector = CustomConnector::find($connectorId);
 
         if (!$connector) {
             return response()->json(['message' => 'Connector not found'], 404);
         }
-
-        // Decode the streams JSON into an array
         $streams = json_decode($connector->streams, true);
 
         if (!isset($streams[$streamIndex])) {
             return response()->json(['message' => 'Stream not found at the given index'], 404);
         }
 
-        // Remove the stream at the given index
         unset($streams[$streamIndex]);
 
-        // If no stream left, delete the connector
         if (count($streams) === 0) {
             $connector->delete();
             return response()->json(['message' => 'Connector deleted as it contions no stream now']);
         }
 
-        // Re-index the array to ensure keys are sequential
         $streams = array_values($streams);
 
-        // Update the connector with the modified streams
         $connector->streams = json_encode($streams);
         $connector->save();
 
-        return response()->json(['message' => 'Stream deleted successfully', 'data' => $connector]);
+        return response()->json(['message' => 'Stream deleted successfully', $connector]);
     }
 }
