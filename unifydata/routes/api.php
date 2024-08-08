@@ -12,8 +12,6 @@ Route::controller(CustomConnectorController::class)->group(function () {
     Route::put('/custom-connectors/{id}/update-stream/{index}', 'updateStreams')->middleware('customValidation:streamUpdate');
     Route::put('/custom-connectors/publish/{id}', 'publishConnector');
     Route::delete('/custom-connectors/{id}',  'deleteConnector');
-    Route::get('/custom-connectors/drafts', 'listDrafts');
-    Route::get('/custom-connectors/published',  'listPublished');
     Route::get('/custom-connectors/selected-connector/{id}', 'selectedConnectorDetails');
     Route::delete('/custom-connectors/delete-stream/{connectorId}/streams/{streamIndex}',  'deleteStream');
 });

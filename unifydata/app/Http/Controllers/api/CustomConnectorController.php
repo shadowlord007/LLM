@@ -148,19 +148,7 @@ class CustomConnectorController extends Controller
 
         return response()->json(['message' => 'Connector deleted successfully']);
     }
-
-    //Return list of drafts connectors
-    public function listDrafts()
-    {
-        $drafts = CustomConnector::select(['name', 'status'])->where('status', 'draft')->get();
-        return response()->json($drafts);
-    }
-    //Return list of publish connectors
-    public function listPublished()
-    {
-        $published = CustomConnector::select(['name', 'status'])->where('status', 'published')->get();
-        return response()->json($published);
-    }
+    
     //Return details of selected connectors
     public function selectedConnectorDetails($id)
     {

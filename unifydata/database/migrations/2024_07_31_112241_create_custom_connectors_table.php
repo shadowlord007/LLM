@@ -20,6 +20,7 @@ return new class extends Migration
             $table->json('auth_credentials')->nullable();
             $table->json('streams');
             $table->json('pagination')->nullable();
+            $table->json('incremental_sync')->nullable();
             $table->enum('status',['draft', 'published'])->default('draft');
             $table->timestamps();
         });
