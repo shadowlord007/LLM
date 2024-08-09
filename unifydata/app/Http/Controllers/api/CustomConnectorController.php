@@ -62,7 +62,7 @@ class CustomConnectorController extends Controller
                 return response()->json(['message' => 'Connector creation failed', $connector]);
             }
             $this->transformStreams($data, $connector);
-
+            // return Response::success($connector, "Connector and stream created successfully");
             return response()->json(['message' => 'Connector and stream created successfully', $connector]);
         }
     }
@@ -77,7 +77,7 @@ class CustomConnectorController extends Controller
         $streams = $data['streams'];
         $streamName = array_column($streams, 'name');
         if (in_array($streamName[0], $existingStreamsName)) {
-
+            // return Response::error("Error! Stream Name must be unique");
             return response()->json(['message' => 'Error! Stream Name must be unique.']);
         }
 
@@ -95,7 +95,7 @@ class CustomConnectorController extends Controller
         $connector->streams = json_encode($updatedStreams);
         $connector->save();
         $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
-
+        // return Response::success($connector, "Streams added successfully");
         return response()->json(['message' => 'Streams added successfully',  $connector]);
     }
 
@@ -114,7 +114,8 @@ class CustomConnectorController extends Controller
 
 
         $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
-        return response()->json(['message' => 'Connector updated successfully', $connector]);
+        // return Response::success($connector, "Connector BaseURL updated successfully");
+        return response()->json(['message' => 'Connector BaseURL updated successfully', $connector]);
     }
 
     //To update streams
@@ -138,7 +139,8 @@ class CustomConnectorController extends Controller
         $this->setDraft($connector);
 
         $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
-        return response()->json(['message' => 'Connector updated successfully', $connector]);
+        // return Response::success($connector, "Connector StreamURL updated successfully");
+        return response()->json(['message' => 'Connector StreamURL updated successfully', $connector]);
     }
     //to set connetor as draft after any update
     private function setDraft($connector)
@@ -159,7 +161,7 @@ class CustomConnectorController extends Controller
 
         return response()->json(['message' => 'Connector deleted successfully']);
     }
-    
+
     //Return details of selected connectors
     public function selectedConnectorDetails($id)
     {
