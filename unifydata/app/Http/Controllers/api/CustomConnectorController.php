@@ -114,14 +114,17 @@ class CustomConnectorController extends Controller
     {
 
         $connector = CustomConnector::find($id);
-        $data = $request->all();
-        $existingStreams = json_decode($connector->streams, true);
-
-        $existingStreams[$index] = $data;
-
         if (!$connector) {
             return response()->json(['message' => 'Connector not found'], 404);
         }
+        $data = $request->all();
+        $existingStreams = json_decode($connector->streams, true);
+        if($index>=count($existingStreams)){
+            return response()->json(['message' => 'Stream index not found'], 404);
+        }
+
+        $existingStreams[$index] = $data;
+
 
         $connector->streams = json_encode($existingStreams);
         $this->setDraft($connector);
