@@ -22,7 +22,7 @@ class UpdateCustomConnectorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string',
+            'name' => 'required|string|max:50',
             'base_url' => 'required|url',
             'auth_type' => 'required|string|in:No Auth,API Key,Bearer,Basic HTTP,OAuth,Session Tokken',
             'auth_credentials' => 'nullable|array',

@@ -23,7 +23,7 @@ class UpdateCustomConnectorStreamrRequest extends FormRequest
     {
         return [
 
-            'name' => 'required|string',
+            'name' => 'required|string|max;20',
             'url' => 'required|string',
             'method' => 'required|string|in:GET,POST',
             'primary_key' => 'nullable|array',

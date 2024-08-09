@@ -31,7 +31,7 @@ class CustomConnectorController extends Controller
         $connector->save();
 
         $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
-
+        // return Response::success($connector, "Connector published successfully");
         return response()->json(['message' => 'Connector published successfully', $connector]);
     }
 
@@ -45,7 +45,7 @@ class CustomConnectorController extends Controller
             if ($connector->base_url !== $data['base_url'] ||
                 $connector->auth_type !== $data['auth_type']) {
                     return Response::error("A connector with the same name but different details already exists.", 409);
-        }
+                }
             return $this->transformStreams($data, $connector);
         } else {
             $connectorData = [
@@ -148,6 +148,7 @@ class CustomConnectorController extends Controller
         $connector->status = "draft";
         $connector->save();
     }
+    
     //To delete connector
     public function deleteConnector($id)
     {
@@ -174,6 +175,7 @@ class CustomConnectorController extends Controller
         $connector->streams = json_decode($connector->streams, true);
         return response()->json($connector);
     }
+
     //Delete streams from a connectors
     public function deleteStream($connectorId, $streamIndex)
     {
