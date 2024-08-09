@@ -72,7 +72,7 @@ class CustomConnectorController extends Controller
         $newStreams = array_map(function ($stream) {
             return [
                 'name' => $stream['name'],
-                'url' => $stream['stream_url'],
+                'url' => $stream['url'],
                 'method' => $stream['method'],
                 'primary_key' => $stream['primary_key'] ?? [],
             ];

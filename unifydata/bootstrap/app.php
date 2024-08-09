@@ -1,9 +1,12 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Response;
 use App\Http\Middleware\CustomConnectorValidation;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,5 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return Response::error("404 Not Found", 404);
+            }
+        });
     })->create();

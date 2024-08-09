@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->string('base_url');
-            // $table->string('stream_url');
             $table->string('auth_type');
             $table->json('auth_credentials')->nullable();
             $table->json('streams');
