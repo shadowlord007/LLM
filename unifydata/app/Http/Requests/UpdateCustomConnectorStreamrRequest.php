@@ -51,7 +51,30 @@ class UpdateCustomConnectorStreamrRequest extends FormRequest
             'pagination.stop_condition' => 'nullable|required_if:pagination.next_page_cursor,Custom|string',
             'pagination.page_size' => 'nullable|integer|required_if:pagination.strategy,Cursor Pagination',
 
-            'pagination.inject_first_request' => 'nullable|boolean'
+            'pagination.inject_first_request' => 'nullable|boolean',
+
+
+
+            'incremental_sync' => 'nullable|array',
+            'incremental_sync.enabled' => 'nullable|boolean',
+            'incremental_sync.cursor_field' => 'required_if:incremental_sync.enabled,true|string',
+
+            'incremental_sync.cursor_datetime_formats' => 'required_if:incremental_sync.enabled,true|array',
+            'incremental_sync.cursor_datetime_formats.*' => 'string|distinct',
+
+            'incremental_sync.api_time_filtering' => 'required_if:incremental_sync.enabled,true|in:Range,Start,No filter (data feed)',
+
+            'incremental_sync.start_date_time_start_type'=> 'required_if:incremental_sync.api_time_filtering,Range,Start|string|in:User Input,Custom',
+            'incremental_sync.start_date_time_start_input'=> 'required_if:incremental_sync.start_date_time_type,User Input|string',
+            'incremental_sync.start_date_times_start_value'=> 'required_if:incremental_sync.start_date_time_type,Custom|string',
+            'incremental_sync.start_date_times_start_format'=> 'required_if:incremental_sync.start_date_time_type,Custom|string',
+
+            'incremental_sync.start_date_time_end_type'=> 'required_if:incremental_sync.api_time_filtering,Range|string|in:User Input,Custom,Now',
+            'incremental_sync.start_date_time_end_input'=> 'required_if:incremental_sync.start_date_time_type,User Input|string',
+            'incremental_sync.start_date_times_end_value'=> 'required_if:incremental_sync.start_date_time_type,Custom|string',
+            'incremental_sync.start_date_times_end_format'=> 'required_if:incremental_sync.start_date_time_type,Custom|string',
+
+
         ];
     }
 }

@@ -24,7 +24,7 @@ class CustomCreateConnectorRequest extends FormRequest
         return [
             'name' => 'required|unique:CustomConnector,name|string',
             'base_url' => 'required|url',
-            'auth_type' => 'required|string',
+            'auth_type' => 'required|string|in:No Auth,API Key,Bearer,Basic HTTP,OAuth,Session Tokken',
             'auth_credentials' => 'nullable|array',
             'streams' => 'required|array',
             'streams.*.name' => 'required|string',

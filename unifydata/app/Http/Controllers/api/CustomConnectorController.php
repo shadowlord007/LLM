@@ -10,12 +10,14 @@ use Illuminate\Support\Facades\Http;
 
 class CustomConnectorController extends Controller
 {
+    //This function is used for returning all custom connectors.
     public function index()
     {
         $connectors = CustomConnector::select(['name', 'status'])->get();
         return response()->json($connectors);
     }
 
+    //This function is used for publish custom connetors.
     public function publishConnector(Request $request, $id)
     {
         $connector = CustomConnector::find($id);
@@ -32,6 +34,7 @@ class CustomConnectorController extends Controller
         return response()->json(['message' => 'Connector published successfully', $connector]);
     }
 
+    //This function is used for create custom connetors and add streams in it.
     public function createConnector(Request $request)
     {
         $data = $request->all();
@@ -56,6 +59,7 @@ class CustomConnectorController extends Controller
         }
     }
 
+    // Mainly use for add streams
     private function transformStreams($data, $connector)
     {
 
@@ -87,6 +91,7 @@ class CustomConnectorController extends Controller
         return response()->json(['message' => 'Streams added successfully',  $connector]);
     }
 
+    //To update base data of custom connector
     public function updateConnector(Request $request, $id)
     {
         $connector = CustomConnector::find($id);
@@ -97,31 +102,43 @@ class CustomConnectorController extends Controller
 
         $data = $request->all();
         $connector->update($data);
+        $this->setDraft($connector);
 
 
         $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
         return response()->json(['message' => 'Connector updated successfully', $connector]);
     }
+
+    //To update streams
     public function updateStreams(Request $request, $id,$index)
     {
 
         $connector = CustomConnector::find($id);
-        $data = $request->all();
-        $existingStreams = json_decode($connector->streams, true);
-
-        $existingStreams[$index] = $data;
-
         if (!$connector) {
             return response()->json(['message' => 'Connector not found'], 404);
         }
+        $data = $request->all();
+        $existingStreams = json_decode($connector->streams, true);
+        if($index>=count($existingStreams)){
+            return response()->json(['message' => 'Stream index not found'], 404);
+        }
+
+        $existingStreams[$index] = $data;
+
 
         $connector->streams = json_encode($existingStreams);
-        $connector->save();
+        $this->setDraft($connector);
 
         $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
         return response()->json(['message' => 'Connector updated successfully', $connector]);
     }
-
+    //to set connetor as draft after any update
+    private function setDraft($connector)
+    {
+        $connector->status = "draft";
+        $connector->save();
+    }
+    //To delete connector
     public function deleteConnector($id)
     {
         $connector = CustomConnector::find($id);
@@ -134,19 +151,8 @@ class CustomConnectorController extends Controller
 
         return response()->json(['message' => 'Connector deleted successfully']);
     }
-
-    public function listDrafts()
-    {
-        $drafts = CustomConnector::select(['name', 'status'])->where('status', 'draft')->get();
-        return response()->json($drafts);
-    }
-
-    public function listPublished()
-    {
-        $published = CustomConnector::select(['name', 'status'])->where('status', 'published')->get();
-        return response()->json($published);
-    }
-
+    
+    //Return details of selected connectors
     public function selectedConnectorDetails($id)
     {
         $connector = CustomConnector::find($id);
@@ -158,6 +164,7 @@ class CustomConnectorController extends Controller
         $connector->streams = json_decode($connector->streams, true);
         return response()->json($connector);
     }
+    //Delete streams from a connectors
     public function deleteStream($connectorId, $streamIndex)
     {
         $connector = CustomConnector::find($connectorId);
@@ -183,6 +190,7 @@ class CustomConnectorController extends Controller
         $connector->streams = json_encode($streams);
         $connector->save();
 
+        $connector->streams = json_decode($connector->streams, true);//To return response into array form instead of json
         return response()->json(['message' => 'Stream deleted successfully', $connector]);
     }
 }

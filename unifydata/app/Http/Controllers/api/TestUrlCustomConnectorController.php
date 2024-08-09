@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Http;
 
 class TestUrlCustomConnectorController extends Controller
 {
+    //using traits
     use ResponseGenerationTrait;
     use AuthenticationHandlerTrait;
     public function testUrl(Request $request, $id, $streamIndex)
@@ -43,9 +44,9 @@ class TestUrlCustomConnectorController extends Controller
                 return response()->json(['message' => 'Invalid JSON response from the API'], 422);
             }
 
-            $responseSchema = $this->getApiSchema($responseData);
+            $responseSchema = $this->generateSchema($responseData); //generate schema of response data
             $headers = $response->getHeaders();
-            $state = $this->createState($streamName);
+            $state = $this->createState($streamName); //creating state for the generated response
             // Validate primary key
             if (!$this->validatePrimaryKey($responseData, $primaryKey)) {
                 return response()->json([
@@ -92,10 +93,11 @@ class TestUrlCustomConnectorController extends Controller
                 ]);
             }
         } catch (\Exception $e) {
-            return response()->json(['message'=> "Error".$e->getMessage()],500);
+            return response()->json(['message' => "Error" . $e->getMessage()], 500);
         }
     }
 
+    //use to create an absolute path using reletive and base url
     private function getFullUrl($baseUrl, $streamUrl)
     {
         if (filter_var($streamUrl, FILTER_VALIDATE_URL)) {

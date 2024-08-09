@@ -19,11 +19,13 @@ class CustomConnector extends Model
         'auth_credentials',
         'streams',
         'pagination',
+        'incremental_sync',
         'status'
     ];
     protected $casts = [
         'auth_credentials' => 'array',
         'streams' => 'array',
         'pagination' => 'array',
+        'incremental_sync'=>'array',
     ];
 }
