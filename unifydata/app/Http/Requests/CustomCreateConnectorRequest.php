@@ -22,12 +22,12 @@ class CustomCreateConnectorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|unique:CustomConnector,name|string|max:50',
+            'name' => 'required|unique:CustomConnector,name|string|max:50|regex:/^[A-Za-z0-9 ]+$/',
             'base_url' => 'required|url',
             'auth_type' => 'required|string|in:No Auth,API Key,Bearer,Basic HTTP,OAuth,Session Tokken',
             'auth_credentials' => 'nullable|array',
             'streams' => 'required|array',
-            'streams.*.name' => 'required|string|max:20',
+            'streams.*.name' => 'required|string|max:20|regex:/^[A-Za-z0-9 ]+$/',
             'streams.*.url' => 'required|string',
             'streams.*.method' => 'required|string|in:GET,POST',
             'streams.*.primary_key' => 'nullable|array',
