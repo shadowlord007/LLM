@@ -22,17 +22,18 @@ class CustomResponseServeiceProvider extends ServiceProvider
     {
         Response::macro('success', function($data = null, $message = 'success', $statusCode = 200){
             return response()->json([
+                'success' => true,
+                'message' => $message,
                 'data' => $data,
-               'message' => $message,
-               'status' => $statusCode
-            ]);
+
+            ], $statusCode);
         });
 
         Response::macro('error', function($message = 'Error', $statusCode = 500){
             return response()->json([
+                'success' => false,
                 'error' => $message,
-               'status' => $statusCode
-            ]);
+            ], $statusCode);
         });
     }
 }

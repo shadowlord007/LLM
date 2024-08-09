@@ -32,6 +32,5 @@ class CustomCreateConnectorRequest extends FormRequest
             'streams.*.method' => 'required|string|in:GET,POST',
             'streams.*.primary_key' => 'nullable|array',
         ];
-
     }
 }
