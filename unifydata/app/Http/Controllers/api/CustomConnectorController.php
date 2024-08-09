@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\CustomConnector;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Response;
 
 class CustomConnectorController extends Controller
 {
@@ -41,6 +42,10 @@ class CustomConnectorController extends Controller
         $connector = CustomConnector::where('name', $data['name'])->first();
 
         if ($connector) {
+            if ($connector->base_url !== $data['base_url'] ||
+                $connector->auth_type !== $data['auth_type']) {
+                    return Response::error("A connector with the same name but different details already exists.", 409);
+        }
             return $this->transformStreams($data, $connector);
         } else {
             $connectorData = [
@@ -53,6 +58,9 @@ class CustomConnectorController extends Controller
             ];
 
             $connector = CustomConnector::create($connectorData);
+            if(!$connector){
+                return response()->json(['message' => 'Connector creation failed', $connector]);
+            }
             $this->transformStreams($data, $connector);
 
             return response()->json(['message' => 'Connector and stream created successfully', $connector]);

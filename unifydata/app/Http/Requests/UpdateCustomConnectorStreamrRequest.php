@@ -53,8 +53,6 @@ class UpdateCustomConnectorStreamrRequest extends FormRequest
 
             'pagination.inject_first_request' => 'nullable|boolean',
 
-
-
             'incremental_sync' => 'nullable|array',
             'incremental_sync.enabled' => 'nullable|boolean',
             'incremental_sync.cursor_field' => 'required_if:incremental_sync.enabled,true|string',

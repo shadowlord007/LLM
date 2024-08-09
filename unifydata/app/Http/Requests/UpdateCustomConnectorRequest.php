@@ -24,9 +24,8 @@ class UpdateCustomConnectorRequest extends FormRequest
         return [
             'name' => 'required|string',
             'base_url' => 'required|url',
-            'auth_type' => 'required|string',
+            'auth_type' => 'required|string|in:No Auth,API Key,Bearer,Basic HTTP,OAuth,Session Tokken',
             'auth_credentials' => 'nullable|array',
-            'streams' => 'nullable|array',
         ];
     }
 }
